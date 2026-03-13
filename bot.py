@@ -153,7 +153,21 @@ app.add_handler(CallbackQueryHandler(buttons))
 import asyncio
 
 async def main():
-    await app.run_polling()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("utr", utr))
+    app.add_handler(CommandHandler("addkey", addkey))
+    app.add_handler(CommandHandler("predict", predict))
+    app.add_handler(CommandHandler("next", nextpred))
+    app.add_handler(CallbackQueryHandler(buttons))
+    app.add_handler(CallbackQueryHandler(level, pattern="level"))
+
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())
