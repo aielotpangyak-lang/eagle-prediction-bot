@@ -5,7 +5,7 @@ import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
-BOT_TOKEN = os.getenv("8615158623:AAFywI6ygU2BTPnnKA4Zb8ZvZkbta-yy2Lk")
+BOT_TOKEN = os.getenv("8615158623:AAGsJOvewkguA2OPM5czm0-zZPB-P4jooXA")
 
 QR_IMAGE = "https://i.ibb.co/hxnx1G2X/Screenshot-2026-03-14-00-06-03-781-com-naviapp.png"
 
