@@ -256,7 +256,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= MAIN =================
 
 def main():
-    if not BOT_TOKEN or BOT_TOKEN == "8615158623:AAGsJOvewkguA2OPM5czm0-zZPB-P4jooXA":
+    if not BOT_TOKEN or BOT_TOKEN == "PUT_YOUR_TOKEN_HERE":
         raise RuntimeError("Set BOT_TOKEN env variable or replace in code.")
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
