@@ -1,173 +1,248 @@
 import os
+import re
 import random
+import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
-BOT_TOKEN = "8615158623:AAFywI6ygU2BTPnnKA4Zb8ZvZkbta-yy2Lk"
+BOT_TOKEN = os.getenv("8615158623:AAFywI6ygU2BTPnnKA4Zb8ZvZkbta-yy2Lk")
+
+QR_IMAGE = "https://i.ibb.co/hxnx1G2X/Screenshot-2026-03-14-00-06-03-781-com-naviapp.png"
+
 UPI_ID = "niggaseller@nyes"
-ADMIN = "@EagleAdminofc"
+ADMIN = "@eagleutrsubmissionbot"
 
 valid_keys = {"EAGLE123", "VIP999"}
+
 active_users = set()
-user_level = {}
+awaiting_key = set()
+awaiting_utr = set()
+
+prediction_history = []
+
+# ---------------- PERIOD ----------------
+
+def get_period():
+    now = datetime.datetime.utcnow()
+    total_minutes = now.hour * 60 + now.minute
+    return now.strftime("%Y%m%d") + str(10000 + total_minutes)
+
+# ---------------- START ----------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = [
-        [InlineKeyboardButton("Enter Key", callback_data="enter")],
-        [InlineKeyboardButton("Buy Key ₹249", callback_data="buy")]
+        [InlineKeyboardButton("ENTER KEY", callback_data="enter_key")],
+        [InlineKeyboardButton("BUY KEY ₹249", callback_data="buy_key")]
     ]
 
+    text = "*🦅 EAGLE PREDICTION VIP*\n\n*SELECT OPTION*"
+
     await update.message.reply_text(
-        "🦅 Eagle Prediction\n\nSelect option:",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        text,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
     )
 
+# ---------------- BUTTON HANDLER ----------------
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
     await query.answer()
 
-    if query.data == "enter":
-        await query.message.reply_text("Use command:\n/addkey YOUR_KEY")
+    data = query.data
 
-    if query.data == "buy":
+# -------- ENTER KEY --------
 
-        msg = f"""
-🦅 Eagle Prediction VIP
+    if data == "enter_key":
 
-Price: ₹249
+        awaiting_key.add(query.from_user.id)
 
-UPI ID:
-{UPI_ID}
-
-Payment karne ke baad UTR submit karo:
-
-/utr YOUR_UTR
-
-Admin:
-{ADMIN}
-"""
-        await query.message.reply_text(msg)
-
-
-async def utr(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if len(context.args) == 0:
-        await update.message.reply_text("Use:\n/utr YOUR_UTR")
-        return
-
-    utr_code = context.args[0]
-
-    await update.message.reply_text(
-        f"UTR Received: {utr_code}\n\nPlease contact admin:\n{ADMIN}"
-    )
-
-
-async def addkey(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if len(context.args) == 0:
-        await update.message.reply_text("Use:\n/addkey KEY")
-        return
-
-    key = context.args[0]
-
-    if key in valid_keys:
-
-        active_users.add(update.effective_user.id)
-
-        keyboard = [
-            [InlineKeyboardButton("Play Level 1", callback_data="level1")],
-            [InlineKeyboardButton("Play Level 2", callback_data="level2")],
-            [InlineKeyboardButton("Play Level 3", callback_data="level3")]
-        ]
-
-        await update.message.reply_text(
-            "✅ Key Activated\n\nSelect Play Level:",
-            reply_markup=InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text(
+            "*PLEASE ENTER YOUR KEY*",
+            parse_mode="Markdown"
         )
 
-    else:
-        await update.message.reply_text("❌ Invalid Key")
+# -------- BUY KEY --------
 
+    if data == "buy_key":
 
-async def level(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        keyboard = [
+            [InlineKeyboardButton("SCAN QR", callback_data="scan_qr")],
+            [InlineKeyboardButton("UPI PAY", callback_data="upi_pay")],
+            [InlineKeyboardButton("SUBMIT UTR", callback_data="submit_utr")]
+        ]
 
-    query = update.callback_query
-    await query.answer()
+        await query.message.reply_text(
+            "*BUY VIP KEY ₹249*",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
+        )
 
-    lvl = int(query.data.replace("level", ""))
+# -------- QR --------
 
-    user_level[query.from_user.id] = lvl
+    if data == "scan_qr":
 
-    await query.message.reply_text(
-        f"🎮 Level {lvl} Selected\n\nUse /predict to start"
-    )
+        await context.bot.send_photo(
+            chat_id=query.from_user.id,
+            photo=QR_IMAGE,
+            caption="*SCAN QR AND PAY ₹249*",
+            parse_mode="Markdown"
+        )
 
+# -------- UPI --------
 
-async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if data == "upi_pay":
 
-    user = update.effective_user.id
+        text = f"*PAY ₹249*\n\n*UPI ID*\n{UPI_ID}"
 
-    if user not in active_users:
-        await update.message.reply_text("Enter key first")
-        return
+        await query.message.reply_text(text, parse_mode="Markdown")
 
-    result = random.choice(["Big", "Small"])
+# -------- UTR --------
 
-    if result == "Small":
-        numbers = random.sample(range(0,5),2)
-    else:
-        numbers = random.sample(range(5,10),2)
+    if data == "submit_utr":
 
-    msg = f"""
-🦅 Eagle Prediction
+        awaiting_utr.add(query.from_user.id)
 
-Result: {result}
+        await query.message.reply_text(
+            "*PLEASE SUBMIT YOUR UTR*",
+            parse_mode="Markdown"
+        )
 
-Numbers:
+# -------- PREDICT --------
+
+    if data == "predict":
+
+        if query.from_user.id not in active_users:
+
+            await query.message.reply_text(
+                "*ENTER KEY FIRST*",
+                parse_mode="Markdown"
+            )
+            return
+
+        result = random.choice(["BIG", "SMALL"])
+
+        if result == "SMALL":
+            numbers = random.sample(range(0,5),2)
+        else:
+            numbers = random.sample(range(5,10),2)
+
+        period = get_period()
+
+        msg = f"""
+*🦅 EAGLE PREDICTION*
+
+*PERIOD*
+{period}
+
+*RESULT*
+{result}
+
+*NUMBERS*
 {numbers[0]}  {numbers[1]}
-
-Use /next for next prediction
 """
 
-    await update.message.reply_text(msg)
+        prediction_history.append(f"{period} {result}")
 
+        if len(prediction_history) > 10:
+            prediction_history.pop(0)
 
-async def nextpred(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await predict(update, context)
+        keyboard = [
+            [
+                InlineKeyboardButton("WIN", callback_data="win"),
+                InlineKeyboardButton("LOSS", callback_data="loss")
+            ],
+            [
+                InlineKeyboardButton("NEXT", callback_data="predict")
+            ],
+            [
+                InlineKeyboardButton("📊", callback_data="history")
+            ]
+        ]
 
+        await query.message.reply_text(
+            msg,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
+        )
+
+# -------- HISTORY --------
+
+    if data == "history":
+
+        if not prediction_history:
+            text = "*NO HISTORY*"
+        else:
+            text = "*LAST 10 PREDICTIONS*\n\n" + "\n".join(prediction_history)
+
+        await query.message.reply_text(text, parse_mode="Markdown")
+
+# ---------------- TEXT HANDLER ----------------
+
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user = update.effective_user.id
+    text = update.message.text.strip()
+
+# -------- KEY INPUT --------
+
+    if user in awaiting_key:
+
+        awaiting_key.remove(user)
+
+        if text in valid_keys:
+
+            active_users.add(user)
+
+            keyboard = [
+                [InlineKeyboardButton("START PREDICT", callback_data="predict")]
+            ]
+
+            await update.message.reply_text(
+                "*KEY ACTIVATED*\n\n*PLEASE PLAY WITH LEVEL 2 🚀*",
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode="Markdown"
+            )
+
+        else:
+
+            await update.message.reply_text(
+                "*INVALID KEY*",
+                parse_mode="Markdown"
+            )
+
+        return
+
+# -------- UTR INPUT --------
+
+    if user in awaiting_utr:
+
+        awaiting_utr.remove(user)
+
+        if re.match(r"^\d{11,13}$", text):
+
+            await update.message.reply_text(
+                "*THANK YOU SO MUCH FOR YOUR TRUST*\n\n"
+                f"*PLEASE SHARE YOUR UTR WITH*\n{ADMIN}\n\n"
+                "*FOR FAST QUERY*",
+                parse_mode="Markdown"
+            )
+
+        else:
+
+            await update.message.reply_text(
+                "*INVALID UTR*\n*SEND 11-13 DIGITS*",
+                parse_mode="Markdown"
+            )
+
+# ---------------- MAIN ----------------
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("utr", utr))
-app.add_handler(CommandHandler("addkey", addkey))
-app.add_handler(CommandHandler("predict", predict))
-app.add_handler(CommandHandler("next", nextpred))
-
-app.add_handler(CallbackQueryHandler(level, pattern="^level"))
 app.add_handler(CallbackQueryHandler(buttons))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
 
-import asyncio
-
-async def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("utr", utr))
-    app.add_handler(CommandHandler("addkey", addkey))
-    app.add_handler(CommandHandler("predict", predict))
-    app.add_handler(CommandHandler("next", nextpred))
-    app.add_handler(CallbackQueryHandler(buttons))
-    app.add_handler(CallbackQueryHandler(level, pattern="level"))
-
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-
-    await asyncio.Event().wait()
-
-if __name__ == "__main__":
-    asyncio.run(main())
+app.run_polling()
