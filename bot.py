@@ -3,7 +3,7 @@ import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
-BOT_TOKEN = os.getenv("8615158623:AAFywI6ygU2BTPnnKA4Zb8ZvZkbta-yy2Lk")
+BOT_TOKEN = "8615158623:AAFywI6ygU2BTPnnKA4Zb8ZvZkbta-yy2Lk"
 UPI_ID = "niggaseller@nyes"
 ADMIN = "@EagleAdminofc"
 
