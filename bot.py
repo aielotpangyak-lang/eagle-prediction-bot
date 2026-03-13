@@ -97,6 +97,9 @@ async def nextpred(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await predict(update, context)
 
 import asyncio
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
+
+# ... tumhare handlers (start, utr, addkey, predict, nextpred, buttons) upar defined hon ...
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -108,8 +111,7 @@ app.add_handler(CommandHandler("next", nextpred))
 app.add_handler(CallbackQueryHandler(buttons))
 
 async def main():
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
+    await app.run_polling()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
