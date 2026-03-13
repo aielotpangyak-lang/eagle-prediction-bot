@@ -146,7 +146,14 @@ app.add_handler(CommandHandler("utr", utr))
 app.add_handler(CommandHandler("addkey", addkey))
 app.add_handler(CommandHandler("predict", predict))
 app.add_handler(CommandHandler("next", nextpred))
-app.add_handler(CallbackQueryHandler(buttons))
-app.add_handler(CallbackQueryHandler(level, pattern="level"))
 
-app.run_polling()
+app.add_handler(CallbackQueryHandler(level, pattern="^level"))
+app.add_handler(CallbackQueryHandler(buttons))
+
+import asyncio
+
+async def main():
+    await app.run_polling()
+
+if __name__ == "__main__":
+    asyncio.run(main())
